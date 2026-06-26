@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Funko Pop Listing Generator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#16151A;
+    --ink-soft:#52505B;
+    --paper:#F2F1EE;
+    --card:#FFFFFF;
+    --line:#E4E2DD;
+    --line-strong:#CBC8C1;
+    --accent:#FF5630;
+    --accent-deep:#E63E1B;
+    --accent-tint:#FFEDE7;
+    --teal:#1F7A6B;
+    --teal-tint:#E4F2EF;
+    --warn:#B26A00;
+    --warn-tint:#FBEFD9;
+    --radius:14px;
+    --radius-sm:9px;
+  }
+  *{box-sizing:border-box;}
+  html{-webkit-text-size-adjust:100%;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Inter',system-ui,sans-serif;
+    font-size:14.5px;
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1180px;margin:0 auto;padding:26px 22px 70px;}
+
+  /* ---- Header ---- */
+  header.top{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:22px;}
+  .brand{display:flex;align-items:center;gap:13px;}
+  .mark{
+    width:46px;height:46px;border-radius:12px;flex:none;
+    background:linear-gradient(145deg,var(--accent),var(--accent-deep));
+    display:grid;place-items:center;color:#fff;
+    font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:22px;
+    box-shadow:0 6px 16px -6px rgba(230,62,27,.55);
+    position:relative;
+  }
+  .mark::after{content:none;}
+  .brand h1{
+    font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:25px;
+    margin:0;letter-spacing:-.5px;line-height:1;
+  }
+  .brand p{margin:5px 0 0;color:var(--ink-soft);font-size:13px;}
+
+  .tabs{display:flex;gap:4px;background:var(--card);border:1px solid var(--line);border-radius:11px;padding:4px;}
+  .tab{
+    font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:13.5px;
+    border:none;background:none;color:var(--ink-soft);
+    padding:8px 16px;border-radius:8px;cursor:pointer;transition:.15s;
+  }
+  .tab[aria-selected="true"]{background:var(--ink);color:#fff;}
+  .tab:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+
+  /* ---- Layout ---- */
+  .grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);gap:20px;align-items:start;}
+  @media(max-width:880px){.grid{grid-template-columns:1fr;}}
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:20px;}
+  .panel + .panel{margin-top:18px;}
+
+  .eyebrow{
+    font-family:'Space Mono',monospace;font-size:11px;letter-spacing:1.5px;
+    text-transform:uppercase;color:var(--accent-deep);margin:0 0 14px;font-weight:700;
+  }
+
+  /* ---- Form ---- */
+  .field{margin-bottom:14px;}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .row3{display:grid;grid-template-columns:1.6fr 1fr;gap:12px;}
+  label{display:block;font-weight:600;font-size:12.5px;margin-bottom:5px;color:var(--ink);}
+  label .hint{font-weight:400;color:var(--ink-soft);}
+  input[type=text],input[type=number],select,textarea{
+    width:100%;font-family:inherit;font-size:14px;color:var(--ink);
+    background:#FBFAF8;border:1px solid var(--line-strong);border-radius:var(--radius-sm);
+    padding:9px 11px;transition:.15s;
+  }
+  textarea{resize:vertical;line-height:1.5;}
+  input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);background:#fff;box-shadow:0 0 0 3px var(--accent-tint);}
+  select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2352505B' stroke-width='1.6' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 11px center;padding-right:30px;}
+
+  .chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:2px;}
+  .chip{
+    font-size:12.5px;font-weight:500;cursor:pointer;user-select:none;
+    border:1px solid var(--line-strong);background:#FBFAF8;color:var(--ink-soft);
+    padding:6px 11px;border-radius:20px;transition:.13s;
+  }
+  .chip:hover{border-color:var(--accent);color:var(--ink);}
+  .chip.on{background:var(--ink);border-color:var(--ink);color:#fff;}
+  .chip input{position:absolute;opacity:0;pointer-events:none;}
+
+  .toggles{display:grid;grid-template-columns:1fr 1fr;gap:8px 14px;margin-top:4px;}
+  .tog{display:flex;align-items:center;gap:9px;font-size:13px;cursor:pointer;color:var(--ink);}
+  .tog input{width:16px;height:16px;accent-color:var(--accent);cursor:pointer;flex:none;}
+
+  details.adv{margin-top:10px;border-top:1px dashed var(--line);padding-top:12px;}
+  details.adv summary{cursor:pointer;font-weight:600;font-size:12.5px;color:var(--ink-soft);list-style:none;}
+  details.adv summary::-webkit-details-marker{display:none;}
+  details.adv summary::before{content:"⌄ ";font-family:'Space Mono';}
+  details.adv[open] summary::before{content:"⌃ ";}
+  .tokenref{font-family:'Space Mono',monospace;font-size:11px;color:var(--ink-soft);background:var(--paper);border-radius:8px;padding:9px 11px;margin-top:10px;line-height:1.7;}
+  .tokenref b{color:var(--accent-deep);}
+
+  /* ---- Preview (the box window signature) ---- */
+  .boxtop{
+    border:1.5px solid var(--ink);border-radius:12px 12px 0 0;
+    background:linear-gradient(180deg,#fff,#FBFAF8);
+    padding:14px 16px 16px;position:relative;overflow:hidden;
+  }
+  .boxtop .funko-tab{
+    position:absolute;top:0;right:18px;background:var(--accent);color:#fff;
+    font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:10px;letter-spacing:1px;
+    padding:4px 10px 5px;border-radius:0 0 7px 7px;text-transform:uppercase;
+  }
+  .boxtop .num{font-family:'Space Mono',monospace;font-size:12px;color:var(--ink-soft);font-weight:700;}
+  .window{
+    margin-top:10px;border:2px dashed var(--line-strong);border-radius:9px;
+    min-height:54px;display:grid;place-items:center;padding:12px;text-align:center;
+    background:repeating-linear-gradient(135deg,#fff,#fff 9px,#FAF9F6 9px,#FAF9F6 18px);
+  }
+  .window .ttl{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:16px;line-height:1.3;letter-spacing:-.2px;}
+  .window .ph{color:var(--line-strong);font-style:italic;font-weight:500;}
+
+  .titlebar{
+    border:1.5px solid var(--ink);border-top:none;border-radius:0 0 12px 12px;
+    padding:11px 14px;display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--ink);
+  }
+  .titlebar .cc{font-family:'Space Mono',monospace;font-size:12px;color:#cdcbd2;}
+  .titlebar .cc b{color:#fff;}
+  .titlebar .cc.over b{color:#FF8A6B;}
+
+  /* ---- Output blocks ---- */
+  .platrow{display:flex;gap:6px;margin:18px 0 0;}
+  .platrow button{
+    font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:12.5px;
+    border:1px solid var(--line);background:var(--card);color:var(--ink-soft);
+    padding:7px 14px;border-radius:8px 8px 0 0;cursor:pointer;border-bottom:none;margin-bottom:-1px;
+  }
+  .platrow button[aria-selected="true"]{background:var(--paper);color:var(--ink);border-color:var(--line-strong);}
+  .outbox{border:1px solid var(--line-strong);border-radius:0 9px 9px 9px;background:var(--paper);}
+  .outbox textarea{
+    border:none;background:transparent;font-family:'Space Mono',monospace;font-size:12.5px;
+    min-height:230px;padding:14px;border-radius:0 9px 0 0;
+  }
+  .outbox textarea:focus{box-shadow:none;}
+  .outfoot{display:flex;justify-content:space-between;align-items:center;padding:9px 12px;border-top:1px solid var(--line);}
+  .outfoot .meta{font-family:'Space Mono',monospace;font-size:11px;color:var(--ink-soft);}
+
+  .btn{
+    font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:13px;cursor:pointer;
+    border:none;border-radius:8px;padding:8px 15px;transition:.13s;display:inline-flex;align-items:center;gap:6px;
+  }
+  .btn.primary{background:var(--accent);color:#fff;}
+  .btn.primary:hover{background:var(--accent-deep);}
+  .btn.ghost{background:var(--ink);color:#fff;}
+  .btn.ghost:hover{opacity:.88;}
+  .btn.tiny{padding:6px 12px;font-size:12px;}
+  .btn:focus-visible{outline:2px solid var(--ink);outline-offset:2px;}
+  .btn.copied{background:var(--teal)!important;color:#fff;}
+
+  .copyrow{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;}
+
+  /* ---- Pricing ---- */
+  .price-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start;}
+  @media(max-width:880px){.price-grid{grid-template-columns:1fr;}}
+  .result{background:var(--ink);color:#fff;border-radius:var(--radius);padding:22px;}
+  .result .lead{font-family:'Space Mono',monospace;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:#9d9aa6;margin:0 0 6px;}
+  .bignum{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:46px;letter-spacing:-1.5px;line-height:1;}
+  .bignum small{font-size:22px;color:#cfcdd6;font-weight:500;}
+  .pl-rows{margin-top:20px;border-top:1px solid #34323c;padding-top:16px;}
+  .pl-rows .pl{display:flex;justify-content:space-between;align-items:baseline;padding:7px 0;font-size:13.5px;}
+  .pl-rows .pl span:first-child{color:#b6b3bf;}
+  .pl-rows .pl span:last-child{font-family:'Space Mono',monospace;font-weight:700;}
+  .pl-rows .pl.good span:last-child{color:#5fd3bd;}
+  .pl-rows .pl.warn span:last-child{color:#FF8A6B;}
+  .pl-rows .pl.divide{border-top:1px solid #34323c;margin-top:6px;padding-top:13px;}
+  .floor-note{margin-top:14px;font-size:12px;color:#9d9aa6;line-height:1.55;}
+  .mod-table{margin-top:14px;font-family:'Space Mono',monospace;font-size:11.5px;color:var(--ink-soft);background:var(--paper);border-radius:9px;padding:11px 13px;line-height:1.85;}
+  .mod-table b{color:var(--ink);}
+
+  .note{font-size:12.5px;color:var(--ink-soft);background:var(--warn-tint);border-radius:9px;padding:11px 13px;border-left:3px solid var(--warn);margin-top:16px;line-height:1.55;}
+
+  .hidden{display:none!important;}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <div class="mark"><svg viewBox="0 0 24 24" width="25" height="25" fill="#fff" aria-hidden="true"><circle cx="12" cy="8.2" r="6.3"/><path d="M6.2 14h11.6v5.5a2 2 0 0 1-2 2H8.2a2 2 0 0 1-2-2Z"/></svg></div>
+      <div>
+        <h1>Funko Pop Listing Studio</h1>
+        <p>Fill the slots → copy clean listings for eBay &amp; Mercari. No more retyping.</p>
+      </div>
+    </div>
+    <div class="tabs" role="tablist">
+      <button class="tab" role="tab" aria-selected="true" id="tab-list" onclick="switchTab('list')">Listing</button>
+      <button class="tab" role="tab" aria-selected="false" id="tab-price" onclick="switchTab('price')">Pricing helper</button>
+    </div>
+  </header>
+
+  <!-- ============ LISTING TAB ============ -->
+  <section id="view-list" class="grid">
+    <!-- INPUTS -->
+    <div>
+      <div class="panel">
+        <p class="eyebrow">The figure</p>
+        <div class="row">
+          <div class="field">
+            <label>Franchise</label>
+            <select id="franchise">
+              <option>Naruto</option><option>One Piece</option><option>Yu-Gi-Oh!</option>
+              <option>Solo Leveling</option><option>Demon Slayer</option><option>Dragon Ball</option>
+              <option>Jujutsu Kaisen</option><option>My Hero Academia</option><option>Bleach</option>
+              <option>Pokémon</option><option value="__custom__">Other / type it…</option>
+            </select>
+            <input type="text" id="franchiseCustom" class="hidden" placeholder="Franchise name" style="margin-top:7px">
+          </div>
+          <div class="field">
+            <label>Pop number <span class="hint">(#)</span></label>
+            <input type="text" id="number" placeholder="e.g. 1407" inputmode="numeric">
+          </div>
+        </div>
+        <div class="field">
+          <label>Character</label>
+          <input type="text" id="character" placeholder="e.g. Sung Jinwoo (Shadow Monarch)">
+        </div>
+
+        <div class="field">
+          <label>Edition / variant <span class="hint">(tap all that apply)</span></label>
+          <div class="chips" id="editionChips">
+            <label class="chip"><input type="checkbox" value="Chase">Chase</label>
+            <label class="chip"><input type="checkbox" value="Glow in the Dark">GITD</label>
+            <label class="chip"><input type="checkbox" value="Flocked">Flocked</label>
+            <label class="chip"><input type="checkbox" value="Metallic">Metallic</label>
+            <label class="chip"><input type="checkbox" value="Vaulted">Vaulted</label>
+          </div>
+          <div class="field" style="margin-top:10px">
+            <input type="text" id="exclusive" placeholder="Exclusive sticker? e.g. Hot Topic, GameStop, SDCC, Funko Shop">
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <p class="eyebrow">Condition</p>
+        <div class="row3">
+          <div class="field">
+            <label>Box</label>
+            <select id="boxgrade">
+              <option value="inbox" selected>In box</option>
+              <option value="nobox">Out of box / figure only</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Figure</label>
+            <select id="figcond">
+              <option selected>Mint, never displayed</option>
+              <option>Displayed, excellent</option>
+              <option>Opened, see photos</option>
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <label>Flaw notes <span class="hint">(optional — honesty sells)</span></label>
+          <input type="text" id="flaws" placeholder="e.g. small dent back-right corner, sticker residue">
+        </div>
+        <div class="field">
+          <label>Add-ons &amp; claims</label>
+          <div class="toggles">
+            <label class="tog"><input type="checkbox" id="t_protector" checked> Ships in Pop protector</label>
+            <label class="tog"><input type="checkbox" id="t_smoke" checked> Smoke-free home</label>
+            <label class="tog"><input type="checkbox" id="t_fast" checked> Same / next-day shipping</label>
+            <label class="tog"><input type="checkbox" id="t_bundle" checked> Bundle &amp; save offer</label>
+            <label class="tog"><input type="checkbox" id="t_pet"> Pet-free home</label>
+            <label class="tog"><input type="checkbox" id="t_authentic" checked> Authenticity line</label>
+          </div>
+        </div>
+
+        <details class="adv">
+          <summary>Edit templates</summary>
+          <div class="field" style="margin-top:12px">
+            <label>Title template</label>
+            <input type="text" id="tplTitle" value="Funko Pop! {franchise} {character} #{number}{edition} w/ protector">
+          </div>
+          <div class="field">
+            <label>Description body <span class="hint">(shared base)</span></label>
+            <textarea id="tplBody" rows="5">{headline}
+
+📦 Please inspect all photos carefully — condition is exactly as shown.{flawline}
+{editionline}{claims}</textarea>
+          </div>
+          <div class="tokenref">
+            tokens: <b>{franchise}</b> <b>{character}</b> <b>{number}</b> <b>{edition}</b> <b>{headline}</b> <b>{boxline}</b> <b>{figcond}</b> <b>{flawline}</b> <b>{editionline}</b> <b>{claims}</b>
+          </div>
+        </details>
+      </div>
+    </div>
+
+    <!-- OUTPUT -->
+    <div>
+      <div class="panel">
+        <p class="eyebrow">Live preview</p>
+        <div class="boxtop">
+          <span class="funko-tab">Funko Pop!</span>
+          <span class="num" id="pvNum">#—</span>
+          <div class="window"><div class="ttl" id="pvTitle"><span class="ph">your title builds here…</span></div></div>
+        </div>
+        <div class="titlebar">
+          <span style="color:#9d9aa6;font-size:12px;font-family:'Space Mono'">TITLE</span>
+          <span class="cc" id="ccount"><b>0</b> / 80</span>
+        </div>
+        <div class="copyrow">
+          <button class="btn primary" id="copyTitle">Copy title</button>
+          <span style="font-size:12px;color:var(--ink-soft);align-self:center">80-char cap fits both eBay &amp; Mercari</span>
+        </div>
+
+        <div class="platrow">
+          <button id="p-ebay" aria-selected="true" onclick="switchPlat('ebay')">eBay</button>
+          <button id="p-mercari" aria-selected="false" onclick="switchPlat('mercari')">Mercari</button>
+        </div>
+        <div class="outbox">
+          <textarea id="descOut" spellcheck="false" readonly></textarea>
+          <div class="outfoot">
+            <span class="meta" id="descMeta">0 chars</span>
+            <button class="btn ghost tiny" id="copyDesc">Copy description</button>
+          </div>
+        </div>
+        <div class="note">
+          <b>eBay tip:</b> build the first listing of each Pop normally, then use <b>“Sell similar”</b> in Seller Hub for repeats — your business policies (shipping/returns) auto-carry, so you only swap title + photos. That plus this generator is your fastest legit loop. Mercari has no seller API, so it's paste-by-hand (or your existing macro).
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ PRICING TAB ============ -->
+  <section id="view-price" class="price-grid hidden">
+    <div class="panel">
+      <p class="eyebrow">Comps &amp; costs</p>
+      <div class="field">
+        <label>Median sold price <span class="hint">(eBay sold comps, last 30–60d)</span></label>
+        <input type="number" id="pComp" placeholder="e.g. 18.00" step="0.5" value="18">
+      </div>
+      <div class="row">
+        <div class="field">
+          <label>Low sold</label>
+          <input type="number" id="pLow" placeholder="12.00" step="0.5" value="12">
+        </div>
+        <div class="field">
+          <label>High sold</label>
+          <input type="number" id="pHigh" placeholder="28.00" step="0.5" value="28">
+        </div>
+      </div>
+      <div class="field">
+        <label>Box grade <span class="hint">(applies a market modifier)</span></label>
+        <select id="pGrade">
+          <option value="1.00">Mint (10) — full comp</option>
+          <option value="0.92" selected>Near Mint (9) — −8%</option>
+          <option value="0.80">Very Good (8) — −20%</option>
+          <option value="0.68">Good (7) — −32%</option>
+          <option value="0.55">No box / figure only — −45%</option>
+        </select>
+      </div>
+      <div class="row">
+        <div class="field">
+          <label>Your cost <span class="hint">(per Pop)</span></label>
+          <input type="number" id="pCost" placeholder="6.00" step="0.5" value="6">
+        </div>
+        <div class="field">
+          <label>Shipping you pay</label>
+          <input type="number" id="pShip" placeholder="5.50" step="0.25" value="5.50">
+        </div>
+      </div>
+      <div class="row">
+        <div class="field">
+          <label>Fee % <span class="hint">(eBay ~13)</span></label>
+          <input type="number" id="pFee" placeholder="13" step="0.5" value="13">
+        </div>
+        <div class="field">
+          <label>Min profit you'll accept</label>
+          <input type="number" id="pMin" placeholder="4.00" step="0.5" value="4">
+        </div>
+      </div>
+      <div class="mod-table">
+        modifiers are starting heuristics — edit the dropdown %s in code once you've<br>
+        calibrated against your own sold data. exclusivity stickers can <b>override</b> all of this.
+      </div>
+    </div>
+
+    <div>
+      <div class="result">
+        <p class="lead">Suggested list price</p>
+        <div class="bignum"><small>$</small><span id="rPrice">—</span></div>
+        <div class="pl-rows">
+          <div class="pl"><span>Condition-adjusted comp</span><span id="rAdj">—</span></div>
+          <div class="pl"><span>− Fees</span><span id="rFeeAmt">—</span></div>
+          <div class="pl"><span>− Shipping</span><span id="rShipAmt">—</span></div>
+          <div class="pl"><span>− Cost</span><span id="rCostAmt">—</span></div>
+          <div class="pl good divide"><span>Est. take-home</span><span id="rNet">—</span></div>
+        </div>
+        <p class="floor-note" id="rFloor"></p>
+      </div>
+      <div class="panel" style="margin-top:18px">
+        <p class="eyebrow">Where to pull comps</p>
+        <p style="margin:0;font-size:13px;color:var(--ink-soft);line-height:1.6">
+          <b>eBay sold listings</b> (filter → Sold + the exact Pop #) is the truth source. With an eBay Store, <b>Terapeak</b> in Seller Hub gives you median/avg sold for free — that's your “median” field. <b>PriceCharting</b> is a fast loose-value sanity check. Median &gt; average here, since one crazy sale skews the mean.
+        </p>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var $ = function(id){return document.getElementById(id);};
+
+  /* ---------- tab switching ---------- */
+  window.switchTab = function(which){
+    var isList = which==='list';
+    $('view-list').classList.toggle('hidden', !isList);
+    $('view-price').classList.toggle('hidden', isList);
+    $('tab-list').setAttribute('aria-selected', isList);
+    $('tab-price').setAttribute('aria-selected', !isList);
+  };
+
+  var plat = 'ebay';
+  window.switchPlat = function(p){
+    plat = p;
+    $('p-ebay').setAttribute('aria-selected', p==='ebay');
+    $('p-mercari').setAttribute('aria-selected', p==='mercari');
+    render();
+  };
+
+  /* ---------- field helpers ---------- */
+  function franchiseVal(){
+    var v = $('franchise').value;
+    return v==='__custom__' ? ($('franchiseCustom').value.trim()||'Anime') : v;
+  }
+  $('franchise').addEventListener('change', function(){
+    $('franchiseCustom').classList.toggle('hidden', this.value!=='__custom__');
+    render();
+  });
+
+  function editionTags(){
+    var out=[];
+    document.querySelectorAll('#editionChips input:checked').forEach(function(c){out.push(c.value);});
+    return out;
+  }
+  // chip visual state
+  document.querySelectorAll('#editionChips .chip').forEach(function(chip){
+    var inp = chip.querySelector('input');
+    chip.addEventListener('click', function(){ setTimeout(function(){ chip.classList.toggle('on', inp.checked); render(); },0); });
+  });
+
+  var boxLines = {
+    "inbox":"Comes in box. Please inspect all photos carefully — condition is exactly as shown.",
+    "nobox":"Figure only — no box, sold loose. Please inspect all photos carefully."
+  };
+
+  /* ---------- title builder (80-char aware) ---------- */
+  function buildTitle(){
+    var fr = franchiseVal();
+    var ch = $('character').value.trim() || 'Character';
+    var num = $('number').value.trim();
+    var ed = editionTags();
+    var exc = $('exclusive').value.trim();
+
+    // assemble edition fragment, priority order, trimmed to fit
+    var edBits = [];
+    if(ed.indexOf('Chase')>-1) edBits.push('Chase');
+    if(exc) edBits.push(exc+' Exclusive');
+    ['Glow in the Dark','Flocked','Metallic'].forEach(function(x){ if(ed.indexOf(x)>-1) edBits.push(x); });
+    if(ed.indexOf('Vaulted')>-1) edBits.push('Vaulted');
+    var edStr = edBits.length ? ' '+edBits.join(' ') : '';
+
+    var tpl = $('tplTitle').value;
+    function fill(edFrag){
+      return tpl.replace('{franchise}',fr).replace('{character}',ch)
+                .replace('{number}', num?num:'').replace('{edition}',edFrag)
+                .replace(/#\s(?=\s|$)/,'').replace(/\s+/g,' ').trim();
+    }
+    var t = fill(edStr);
+    // trim edition bits one by one if >80, then drop "Vinyl Figure"
+    while(t.length>80 && edBits.length){ edBits.pop(); t = fill(edBits.length?' '+edBits.join(' '):''); }
+    if(t.length>80) t = t.replace(' w/ protector','');
+    if(t.length>80) t = t.slice(0,80).trim();
+    return t;
+  }
+
+  /* ---------- description builder ---------- */
+  function claimsBlock(){
+    var lines=[];
+    if($('t_protector').checked) lines.push('🛡️ Ships secured in a Pop protector + bubble mailer');
+    if($('t_fast').checked)      lines.push('🚚 Same / next-day shipping');
+    if($('t_bundle').checked)    lines.push('🎁 Bundle multiple Pops & I’ll combine shipping — just ask');
+    if($('t_smoke').checked && $('t_pet').checked) lines.push('🏠 Smoke-free & pet-free home');
+    else if($('t_smoke').checked) lines.push('🏠 Smoke-free home');
+    else if($('t_pet').checked)   lines.push('🏠 Pet-free home');
+    if($('t_authentic').checked) lines.push('✅ 100% authentic Funko — never a reproduction');
+    return lines.length ? '\n'+lines.join('\n') : '';
+  }
+
+  function editionLine(){
+    var ed = editionTags(), exc=$('exclusive').value.trim(), bits=[];
+    if(exc) bits.push('★ '+exc+' Exclusive');
+    ed.forEach(function(e){
+      if(e==='Chase') bits.push('★ CHASE variant (limited 1-in-6 ratio)');
+      else if(e==='Vaulted') bits.push('★ Vaulted / retired — no longer in production');
+      else bits.push('★ '+e);
+    });
+    return bits.length ? bits.join('\n')+'\n' : '';
+  }
+
+  function buildDesc(){
+    var fr=franchiseVal(), ch=$('character').value.trim()||'Character', num=$('number').value.trim();
+    var grade=$('boxgrade').value;
+    var headline = ch+' — '+fr+' Funko Pop!'+(num?' #'+num:'');
+    var flaw=$('flaws').value.trim();
+    var flawLine = flaw ? '\n⚠️ Noted: '+flaw : '';
+    var body = $('tplBody').value;
+    var filled = body
+      .replace('{headline}', headline)
+      .replace('{franchise}', fr).replace('{character}', ch).replace('{number}', num)
+      .replace('{boxline}', boxLines[grade])
+      .replace('{figcond}', $('figcond').value)
+      .replace('{flawline}', flawLine)
+      .replace('{editionline}', editionLine())
+      .replace('{claims}', claimsBlock());
+
+    // Mercari = tighter & emoji-free (Mercari blocks emojis); ★ bullets are allowed
+    if(plat==='mercari'){
+      filled += '\n\n#funko #funkopop #'+fr.replace(/[^a-z0-9]/gi,'').toLowerCase()+' #anime';
+      filled = stripEmoji(filled);
+    } else {
+      filled += '\n\nMessage me with any questions before buying — happy to send extra photos. Thanks for looking, and check out my other listings!';
+    }
+    return filled.replace(/\n{3,}/g,'\n\n').trim();
+  }
+
+  // remove emoji/pictographs for Mercari; preserve ★ (U+2605) as a bullet, then tidy spacing
+  function stripEmoji(s){
+    s = s.replace(/[\u{1F000}-\u{1FAFF}\u{2190}-\u{21FF}\u{2300}-\u{27BF}\u{2B00}-\u{2BFF}\u{FE00}-\u{FE0F}\u{1F1E6}-\u{1F1FF}]/gu, function(m){
+      return m==='\u2605' ? '★' : '';
+    });
+    return s.split('\n').map(function(l){
+      return l.replace(/^\s+/,'').replace(/\s{2,}/g,' ').replace(/\s+$/,'');
+    }).join('\n');
+  }
+
+  /* ---------- render ---------- */
+  function render(){
+    var title = buildTitle();
+    var num = $('number').value.trim();
+    $('pvTitle').innerHTML = title ? title.replace(/&/g,'&amp;').replace(/</g,'&lt;') : '<span class="ph">your title builds here…</span>';
+    $('pvNum').textContent = num ? '#'+num : '#—';
+    var cc=$('ccount'); cc.querySelector('b').textContent=title.length;
+    cc.classList.toggle('over', title.length>80);
+
+    var desc = buildDesc();
+    $('descOut').value = desc;
+    $('descMeta').textContent = desc.length+' chars'+(plat==='mercari'?' · Mercari limit 1000':'');
+    titleCache=title; descCache=desc;
+  }
+  var titleCache='', descCache='';
+
+  /* ---------- copy ---------- */
+  function copy(text, btn, label){
+    var done=function(){
+      var orig=btn.textContent; btn.textContent='✓ Copied'; btn.classList.add('copied');
+      setTimeout(function(){btn.textContent=label||orig; btn.classList.remove('copied');},1300);
+    };
+    if(navigator.clipboard&&navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(done).catch(function(){fallback(text);done();});
+    } else { fallback(text); done(); }
+  }
+  function fallback(text){
+    var ta=document.createElement('textarea'); ta.value=text; ta.style.position='fixed'; ta.style.opacity=0;
+    document.body.appendChild(ta); ta.select(); try{document.execCommand('copy');}catch(e){} document.body.removeChild(ta);
+  }
+  $('copyTitle').addEventListener('click', function(){ copy(titleCache, this, 'Copy title'); });
+  $('copyDesc').addEventListener('click', function(){ copy(descCache, this, 'Copy description'); });
+
+  /* ---------- pricing ---------- */
+  function num(id){ var v=parseFloat($(id).value); return isFinite(v)?v:0; }
+  function money(n){ return n.toFixed(2); }
+  function priceRound(n){ // round to nearest .99 just below
+    var base=Math.max(1, Math.round(n)-1); return base+0.99;
+  }
+  function calcPrice(){
+    var comp=num('pComp'), mod=parseFloat($('pGrade').value), cost=num('pCost'),
+        ship=num('pShip'), fee=num('pFee')/100, minP=num('pMin');
+    var adj = comp*mod;
+    var list = priceRound(adj);
+    var feeAmt = list*fee;
+    var net = list - feeAmt - ship - cost;
+
+    // floor: lowest list where net >= minProfit
+    var floor = (cost+ship+minP)/(1-fee);
+    floor = priceRound(floor);
+
+    $('rPrice').textContent = money(list);
+    $('rAdj').textContent = '$'+money(adj);
+    $('rFeeAmt').textContent = '$'+money(feeAmt);
+    $('rShipAmt').textContent = '$'+money(ship);
+    $('rCostAmt').textContent = '$'+money(cost);
+    var netEl=$('rNet'); netEl.textContent='$'+money(net);
+    netEl.parentElement.classList.toggle('good', net>=minP);
+    netEl.parentElement.classList.toggle('warn', net<minP);
+
+    var fNote=$('rFloor');
+    if(list < floor){
+      fNote.innerHTML = '⚠️ Comp-based price nets below your $'+money(minP)+' minimum. Your <b>floor is $'+money(floor)+'</b> — don’t list under it, or wait for a stronger comp / better-condition copy.';
+    } else {
+      fNote.innerHTML = '✓ Clears your $'+money(minP)+' minimum. Hard floor for this Pop is <b>$'+money(floor)+'</b> — never accept an offer below it.';
+    }
+  }
+
+  ['pComp','pLow','pHigh','pGrade','pCost','pShip','pFee','pMin'].forEach(function(id){
+    $(id).addEventListener('input', calcPrice);
+  });
+
+  /* ---------- wire all listing inputs ---------- */
+  ['franchise','franchiseCustom','number','character','exclusive','boxgrade','figcond','flaws',
+   't_protector','t_smoke','t_fast','t_bundle','t_pet','t_authentic','tplTitle','tplBody']
+   .forEach(function(id){
+     var el=$(id); if(!el) return;
+     el.addEventListener('input', render); el.addEventListener('change', render);
+   });
+
+  render(); calcPrice();
+})();
+</script>
+</body>
+</html>
